@@ -3,6 +3,9 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using SuiteCloudFileUploadHelper.ViewModels;
 using SuiteCloudFileUploadHelper.Views;
+using System;
+using System.IO;
+using System.Linq;
 
 namespace SuiteCloudFileUploadHelper;
 
@@ -17,9 +20,16 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            var absoluteFilePath = desktop.Args?.FirstOrDefault();
+            if (!File.Exists(absoluteFilePath))
+            {
+                ArgumentNullException.ThrowIfNull(absoluteFilePath);
+            }
+
+            var fileInfo = new FileInfo(absoluteFilePath); 
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(),
+                DataContext = new MainWindowViewModel(fileInfo),
             };
         }
 

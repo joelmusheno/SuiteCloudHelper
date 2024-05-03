@@ -1,8 +1,15 @@
-﻿namespace SuiteCloudFileUploadHelper.ViewModels;
+﻿using System.IO;
+
+namespace SuiteCloudFileUploadHelper.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-#pragma warning disable CA1822 // Mark members as static
-    public string Greeting => "Welcome to Avalonia!";
-#pragma warning restore CA1822 // Mark members as static
+    private readonly FileInfo _fileInfo;
+
+    public MainWindowViewModel(FileInfo fileInfo)
+    {
+        _fileInfo = fileInfo;
+    }
+
+    public string File => _fileInfo.Name;
 }
