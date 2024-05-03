@@ -3,11 +3,13 @@
         xmlns:vm="using:SuiteCloudFileUploadHelper.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:models="clr-namespace:SuiteCloudFileUploadHelper.Models"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="SuiteCloudFileUploadHelper.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="SuiteCloudFileUploadHelper">
+        Title="SuiteCloudFileUploadHelper"
+        Width="300" Height="400">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -15,6 +17,25 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <TextBlock Text="{Binding File}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <Border BorderBrush="Black" BorderThickness="3"> 
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Button Name="CopyToAccountButton" Content="Copy to Account" 
+                        VerticalAlignment="Top" HorizontalAlignment="Center" Click="CopyToAccountButton_OnClick" />
+                <TextBlock Text="{Binding FileToUpload}" Margin="10" Padding="5" />
+                <TextBlock Text="{Binding SdfFolder}" Margin="10" Padding="5" />
 
+                <ListBox ItemsSource="{Binding SdfAccountsAvailable}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:SdfPackage">
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}"/>
+                                <TextBlock Text="{Binding Name}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
 </Window>
