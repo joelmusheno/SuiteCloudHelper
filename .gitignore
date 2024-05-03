@@ -1,0 +1,65 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# visual studio settings
+.vs/
+
+# terraform local files
+.terraform/
+*.tfstate*
+.terraform.lock.hcl
+
+# JS Dependencies
+node_modules
+/.pnp
+.pnp.js
+package-lock.json
+
+# production JS build
+/build
+
+# build directories
+bin/
+obj/
+launchSettings.json
+
+# User-specific files
+*.suo
+*.user
+
+# lambda packaged files
+terraform/Lambdas.zip
+
+# ReSharper is a .NET coding add-in
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# rider settings
+.idea
+
+### macOS template
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+### Windows template
+# Windows thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# testing coverage
+coverage/
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
