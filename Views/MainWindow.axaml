@@ -1,41 +1,48 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:SuiteCloudFileUploadHelper.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:models="clr-namespace:SuiteCloudFileUploadHelper.Models"
+        xmlns:viewModels="clr-namespace:SuiteCloudFileUploadHelper.ViewModels"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="SuiteCloudFileUploadHelper.Views.MainWindow"
-        x:DataType="vm:MainWindowViewModel"
+        x:DataType="viewModels:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="SuiteCloudFileUploadHelper"
         Width="300" Height="400">
-
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainWindowViewModel/>
+         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <viewModels:MainWindowViewModel/>
     </Design.DataContext>
-
     <Border BorderBrush="Black" BorderThickness="3"> 
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-                <Button Name="CopyToAccountButton" Content="Copy to Account" 
-                        VerticalAlignment="Top" HorizontalAlignment="Center" Click="CopyToAccountButton_OnClick" />
+        <DockPanel LastChildFill="True">
+
+            <StackPanel DockPanel.Dock="Top" Margin="10">
+
                 <TextBlock Text="{Binding FileToUpload}" Margin="10" Padding="5" />
                 <TextBlock Text="{Binding SdfFolder}" Margin="10" Padding="5" />
-
-                <ListBox ItemsSource="{Binding SdfAccountsAvailable}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="models:SdfPackage">
-                            <StackPanel Orientation="Horizontal">
-                                <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}"/>
-                                <TextBlock Text="{Binding Name}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                
+                <Button Name="CopyToAccountButton" Content="Copy to Account" 
+                        VerticalAlignment="Top" HorizontalAlignment="Center" Click="CopyToAccountButton_OnClick" />
             </StackPanel>
-        </ScrollViewer>
+  
+
+            <DockPanel DockPanel.Dock="Bottom" Margin="10">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ListBox ItemsSource="{Binding SdfAccountsAvailable}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="models:SdfPackage">
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}"/>
+                                    <TextBlock Text="{Binding Name}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </ScrollViewer>
+            </DockPanel>
+
+        </DockPanel>
     </Border>
 </Window>
