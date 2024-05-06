@@ -40,16 +40,6 @@ public partial class MainWindow : Window
         }
     }
 
-    protected void OnKeyDown(object sender, KeyEventArgs e)
-    {
-        switch (e.Key)
-        {
-            case Key.Escape:
-                Close();
-                break;
-        }
-    }
-
     private void UpdateProjectJsonFileSdfFolder(DirectoryInfo baseFolderDirectoryInfo, string accountName)
     {
         var packageDefinition = new PackageDefinition { DefaultAuthId = accountName };
