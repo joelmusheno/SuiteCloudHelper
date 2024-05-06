@@ -2,10 +2,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using SuiteCloudFileUploadHelper.Models;
 using SuiteCloudFileUploadHelper.ViewModels;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 namespace SuiteCloudFileUploadHelper.Views;
 
@@ -33,7 +35,8 @@ public partial class MainWindow : Window
             Console.WriteLine($"{package.Name}, {package.IsChecked}");
             Console.WriteLine(suiteCloudFileUploadCommand);
 
-            ExecuteShellCommand(suiteCloudFileUploadCommand, viewModel.SdfFolderDirectoryInfo);
+            UpdateProjectJsonFileSdfFolder(viewModel.SdfFolderDirectoryInfo, package.Name);
+            package.Success = ExecuteShellCommand(suiteCloudFileUploadCommand, viewModel.SdfFolderDirectoryInfo);
         }
     }
 
@@ -47,7 +50,14 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ExecuteShellCommand(string suiteCloudFileUploadCommand, DirectoryInfo sdfFolderDirectoryInfo)
+    private void UpdateProjectJsonFileSdfFolder(DirectoryInfo baseFolderDirectoryInfo, string accountName)
+    {
+        var packageDefinition = new PackageDefinition { DefaultAuthId = accountName };
+        File.WriteAllText(baseFolderDirectoryInfo.FullName + "/project.json",
+            JsonSerializer.Serialize(packageDefinition));
+    }
+
+    private bool ExecuteShellCommand(string suiteCloudFileUploadCommand, DirectoryInfo sdfFolderDirectoryInfo)
     {
         var isWindows = System.Runtime.InteropServices.RuntimeInformation
             .IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
@@ -76,9 +86,6 @@ public partial class MainWindow : Window
         Console.Write(stdout);
         Console.Write(stderr);
 
-        if (process.ExitCode != 0)
-        {
-            throw new Exception("Unable to upload files");
-        }
+        return process.ExitCode != 0;
     }
 }
