@@ -1,7 +1,6 @@
 ﻿using SuiteCloudFileUploadHelper.Models;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -12,31 +11,31 @@ namespace SuiteCloudFileUploadHelper.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    private readonly FileInfo _fileInfo;
-    private readonly DirectoryInfo _baseSdfPackageFolder;
+    private readonly DirectoryInfo _baseSdfPackageFolderDirectoryInfo;
     private readonly string _selectedAccount;
+
+    public FileInfo FileToUpload { get; }
+    public string FileToUploadName => FileToUpload.Name;
+    public DirectoryInfo SdfFolderDirectoryInfo => _baseSdfPackageFolderDirectoryInfo;
+    public string SdfFolderName => _baseSdfPackageFolderDirectoryInfo.Name;
+    public SdfPackage[] SdfAccountsAvailable { get; }
 
     public MainWindowViewModel(FileInfo fileInfo)
     {
-        _fileInfo = fileInfo;
-        _baseSdfPackageFolder = FindSuiteCloudConfigDirectory(_fileInfo);
+        FileToUpload = fileInfo;
+        _baseSdfPackageFolderDirectoryInfo = FindSuiteCloudConfigDirectory(FileToUpload);
 
-        if (_baseSdfPackageFolder == null)
+        if (_baseSdfPackageFolderDirectoryInfo == null)
         {
             throw new ArgumentException("Unable to find suitecloud.config.js in folder hierarchy");
         }
  
-        var projectJsonPath = Path.Combine(_baseSdfPackageFolder.FullName, "project.json");
-        var projectJsonContent = File.ReadAllText(projectJsonPath);
-        var projectObj = JsonDocument.Parse(projectJsonContent).RootElement;
-        _selectedAccount = projectObj.GetProperty("defaultAuthId").GetString() ?? string.Empty;
+        var projectJsonPath = Path.Combine(_baseSdfPackageFolderDirectoryInfo.FullName, "project.json");
+        var packageDefinition = JsonSerializer.Deserialize<PackageDefinition>(File.ReadAllText(projectJsonPath));
+        _selectedAccount = packageDefinition?.DefaultAuthId ?? string.Empty;
 
         SdfAccountsAvailable = GetSdfAccountsAvailable();
     }
-
-    public string FileToUpload => _fileInfo.Name;
-    public string SdfFolder => _baseSdfPackageFolder.Name;
-    public SdfPackage[] SdfAccountsAvailable { get; }
 
     private DirectoryInfo FindSuiteCloudConfigDirectory(FileInfo fileInfo)
     {
@@ -55,7 +54,7 @@ public class MainWindowViewModel : ViewModelBase
         return null;
     }
 
-    public SdfPackage[] GetSdfAccountsAvailable()
+    private SdfPackage[] GetSdfAccountsAvailable()
     {
 
         var command = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
