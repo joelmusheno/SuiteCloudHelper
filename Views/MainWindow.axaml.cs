@@ -1,6 +1,4 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using SuiteCloudFileUploadHelper.Models;
 using SuiteCloudFileUploadHelper.ViewModels;
@@ -40,14 +38,14 @@ public partial class MainWindow : Window
         }
     }
 
-    private void UpdateProjectJsonFileSdfFolder(DirectoryInfo baseFolderDirectoryInfo, string accountName)
+    private void UpdateProjectJsonFileSdfFolder(DirectoryInfo? baseFolderDirectoryInfo, string accountName)
     {
         var packageDefinition = new PackageDefinition { DefaultAuthId = accountName };
         File.WriteAllText(baseFolderDirectoryInfo.FullName + "/project.json",
             JsonSerializer.Serialize(packageDefinition));
     }
 
-    private bool ExecuteShellCommand(string suiteCloudFileUploadCommand, DirectoryInfo sdfFolderDirectoryInfo)
+    private bool ExecuteShellCommand(string suiteCloudFileUploadCommand, DirectoryInfo? sdfFolderDirectoryInfo)
     {
         var isWindows = System.Runtime.InteropServices.RuntimeInformation
             .IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);

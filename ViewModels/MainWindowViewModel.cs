@@ -11,12 +11,12 @@ namespace SuiteCloudFileUploadHelper.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    private readonly DirectoryInfo _baseSdfPackageFolderDirectoryInfo;
+    private readonly DirectoryInfo? _baseSdfPackageFolderDirectoryInfo;
     private readonly string _selectedAccount;
 
     public FileInfo FileToUpload { get; }
     public string FileToUploadName => FileToUpload.Name;
-    public DirectoryInfo SdfFolderDirectoryInfo => _baseSdfPackageFolderDirectoryInfo;
+    public DirectoryInfo? SdfFolderDirectoryInfo => _baseSdfPackageFolderDirectoryInfo;
     public string SdfFolderName => _baseSdfPackageFolderDirectoryInfo.Name;
     public SdfPackage[] SdfAccountsAvailable { get; }
 
@@ -37,7 +37,7 @@ public class MainWindowViewModel : ViewModelBase
         SdfAccountsAvailable = GetSdfAccountsAvailable();
     }
 
-    private DirectoryInfo FindSuiteCloudConfigDirectory(FileInfo fileInfo)
+    private DirectoryInfo? FindSuiteCloudConfigDirectory(FileInfo fileInfo)
     {
         var currentDirectory = fileInfo.Directory;
 
