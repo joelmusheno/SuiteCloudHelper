@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -13,17 +14,17 @@ public class MainWindowViewModel : ViewModelBase
 {
     private readonly DirectoryInfo? _baseSdfPackageFolderDirectoryInfo;
     private readonly string _selectedAccount;
+    private readonly FileInfo _fileToUpload;
+    private DirectoryInfo? SdfFolderDirectoryInfo => _baseSdfPackageFolderDirectoryInfo;
 
-    public FileInfo FileToUpload { get; }
-    public string FileToUploadName => FileToUpload.Name;
-    public DirectoryInfo? SdfFolderDirectoryInfo => _baseSdfPackageFolderDirectoryInfo;
-    public string SdfFolderName => _baseSdfPackageFolderDirectoryInfo.Name;
+    public string FileToUploadName => _fileToUpload.Name;
+    public string SdfFolderName => _baseSdfPackageFolderDirectoryInfo?.Name ?? string.Empty;
     public SdfPackage[] SdfAccountsAvailable { get; }
 
     public MainWindowViewModel(FileInfo fileInfo)
     {
-        FileToUpload = fileInfo;
-        _baseSdfPackageFolderDirectoryInfo = FindSuiteCloudConfigDirectory(FileToUpload);
+        _fileToUpload = fileInfo;
+        _baseSdfPackageFolderDirectoryInfo = FindSuiteCloudConfigDirectory(_fileToUpload);
 
         if (_baseSdfPackageFolderDirectoryInfo == null)
         {
@@ -35,6 +36,61 @@ public class MainWindowViewModel : ViewModelBase
         _selectedAccount = packageDefinition?.DefaultAuthId ?? string.Empty;
 
         SdfAccountsAvailable = GetSdfAccountsAvailable();
+    }
+
+    public void SendToAccounts()
+    {
+        foreach (var package in SdfAccountsAvailable.Where(p => p.IsChecked))
+        {
+            var suiteCloudFileUploadCommand = "suitecloud file:upload --paths " +
+                                              _fileToUpload.FullName.Replace(SdfFolderDirectoryInfo.FullName + "/src/FileCabinet", 
+                                                  string.Empty);
+
+            Console.WriteLine($"{package.Name}, {package.IsChecked}");
+            Console.WriteLine(suiteCloudFileUploadCommand);
+
+            UpdateProjectJsonFileSdfFolder(SdfFolderDirectoryInfo, package.Name);
+            package.Success = ExecuteShellCommand(suiteCloudFileUploadCommand, SdfFolderDirectoryInfo);
+        }
+    }
+    
+    private void UpdateProjectJsonFileSdfFolder(DirectoryInfo? baseFolderDirectoryInfo, string accountName)
+    {
+        var packageDefinition = new PackageDefinition { DefaultAuthId = accountName };
+        File.WriteAllText(baseFolderDirectoryInfo.FullName + "/project.json",
+            JsonSerializer.Serialize(packageDefinition));
+    }
+    
+    private bool ExecuteShellCommand(string suiteCloudFileUploadCommand, DirectoryInfo? sdfFolderDirectoryInfo)
+    {
+        var isWindows = RuntimeInformation
+            .IsOSPlatform(OSPlatform.Windows);
+
+        var fileName = isWindows ? "cmd.exe" : "/bin/bash";
+        var arguments = isWindows ? $"/c \"{suiteCloudFileUploadCommand}\"" : $"-c \"{suiteCloudFileUploadCommand}\"";
+        
+        var processInfo = new ProcessStartInfo
+        {
+            FileName = fileName,
+            Arguments = arguments,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            WorkingDirectory = sdfFolderDirectoryInfo.FullName
+        };
+
+        var process = new Process { StartInfo = processInfo };
+
+        process.Start();
+
+        var stdout = process.StandardOutput.ReadToEnd();
+        var stderr = process.StandardError.ReadToEnd();
+        process.WaitForExit();
+
+        Console.Write(stdout);
+        Console.Write(stderr);
+
+        return process.ExitCode != 0;
     }
 
     private DirectoryInfo? FindSuiteCloudConfigDirectory(FileInfo fileInfo)
@@ -71,12 +127,13 @@ public class MainWindowViewModel : ViewModelBase
             Arguments = commandArguments,
             RedirectStandardOutput = true
         };
+
         var environments = new List<SdfPackage>();
         using var process = Process.Start(startInfo);
         using var reader = process?.StandardOutput;
         var ansiEscapeRegex = new Regex(@"\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]?");
         var result = reader?.ReadToEnd();
-        result = ansiEscapeRegex.Replace(result, string.Empty);
+        result = ansiEscapeRegex.Replace(result!, string.Empty);
         var lines = result.Split('\n');
         foreach (var line in lines)
         {

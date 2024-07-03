@@ -26,7 +26,7 @@
                 <TextBlock Text="{Binding SdfFolderName}" Margin="10" Padding="5" />
                 
                 <Button Name="CopyToAccountButton" Content="Copy to Account" IsDefault="True"
-                        VerticalAlignment="Top" HorizontalAlignment="Center" Click="CopyToAccountButton_OnClick" />
+                        VerticalAlignment="Top" HorizontalAlignment="Center" Command="{Binding SendToAccounts}" />
             </StackPanel>
   
 
