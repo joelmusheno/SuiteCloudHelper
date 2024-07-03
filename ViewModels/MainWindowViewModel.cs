@@ -1,74 +1,72 @@
 ﻿using SuiteCloudFileUploadHelper.Models;
+using SuiteCloudFileUploadHelper.Suitecloud.Package;
 using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace SuiteCloudFileUploadHelper.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    private readonly DirectoryInfo? _baseSdfPackageFolderDirectoryInfo;
-    private readonly string _selectedAccount;
+    private readonly DirectoryInfo? _packageRoot;
     private readonly FileInfo _fileToUpload;
-    private DirectoryInfo? SdfFolderDirectoryInfo => _baseSdfPackageFolderDirectoryInfo;
 
     public string FileToUploadName => _fileToUpload.Name;
-    public string SdfFolderName => _baseSdfPackageFolderDirectoryInfo?.Name ?? string.Empty;
-    public SdfPackage[] SdfAccountsAvailable { get; }
+    public string SdfFolderName => _packageRoot?.Name ?? string.Empty;
+    public ImmutableArray<SdfPackage> SdfAccountsAvailable { get; }
 
     public MainWindowViewModel(FileInfo fileInfo)
     {
         _fileToUpload = fileInfo;
-        _baseSdfPackageFolderDirectoryInfo = FindSuiteCloudConfigDirectory(_fileToUpload);
+        _packageRoot = SuitecloudConfiguration.FindPackageRoot(_fileToUpload);
 
-        if (_baseSdfPackageFolderDirectoryInfo == null)
+        if (_packageRoot == null)
         {
             throw new ArgumentException("Unable to find suitecloud.config.js in folder hierarchy");
         }
- 
-        var projectJsonPath = Path.Combine(_baseSdfPackageFolderDirectoryInfo.FullName, "project.json");
-        var packageDefinition = JsonSerializer.Deserialize<PackageDefinition>(File.ReadAllText(projectJsonPath));
-        _selectedAccount = packageDefinition?.DefaultAuthId ?? string.Empty;
 
-        SdfAccountsAvailable = GetSdfAccountsAvailable();
+        var selectedAccount = SuitecloudConfiguration.GetSelectedAccount(_packageRoot);
+
+        SdfAccountsAvailable = SuitecloudConfiguration.GetAccountsAvailable(selectedAccount);
     }
 
     public void SendToAccounts()
     {
         foreach (var package in SdfAccountsAvailable.Where(p => p.IsChecked))
         {
-            var suiteCloudFileUploadCommand = "suitecloud file:upload --paths " +
-                                              _fileToUpload.FullName.Replace(SdfFolderDirectoryInfo.FullName + "/src/FileCabinet", 
-                                                  string.Empty);
-
             Console.WriteLine($"{package.Name}, {package.IsChecked}");
-            Console.WriteLine(suiteCloudFileUploadCommand);
-
-            UpdateProjectJsonFileSdfFolder(SdfFolderDirectoryInfo, package.Name);
-            package.Success = ExecuteShellCommand(suiteCloudFileUploadCommand, SdfFolderDirectoryInfo);
+            UpdateProjectJsonFileSdfFolder(_packageRoot, package.Name);
+            package.Success = ExecuteShellCommand(_packageRoot!);
         }
     }
-    
-    private void UpdateProjectJsonFileSdfFolder(DirectoryInfo? baseFolderDirectoryInfo, string accountName)
+
+    private void UpdateProjectJsonFileSdfFolder(DirectoryInfo? packageRoot, string accountName)
     {
         var packageDefinition = new PackageDefinition { DefaultAuthId = accountName };
-        File.WriteAllText(baseFolderDirectoryInfo.FullName + "/project.json",
+        File.WriteAllText(packageRoot!.FullName + "/project.json",
             JsonSerializer.Serialize(packageDefinition));
     }
-    
-    private bool ExecuteShellCommand(string suiteCloudFileUploadCommand, DirectoryInfo? sdfFolderDirectoryInfo)
+
+    private bool ExecuteShellCommand(DirectoryInfo sdfFolderDirectoryInfo)
     {
+        var suiteCloudFileUploadCommand = "suitecloud file:upload --paths " +
+                                          _fileToUpload.FullName.Replace(
+                                              _packageRoot!.FullName + "/src/FileCabinet",
+                                              string.Empty);
+
+        Console.WriteLine(suiteCloudFileUploadCommand);
+
+
         var isWindows = RuntimeInformation
             .IsOSPlatform(OSPlatform.Windows);
 
         var fileName = isWindows ? "cmd.exe" : "/bin/bash";
         var arguments = isWindows ? $"/c \"{suiteCloudFileUploadCommand}\"" : $"-c \"{suiteCloudFileUploadCommand}\"";
-        
+
         var processInfo = new ProcessStartInfo
         {
             FileName = fileName,
@@ -92,61 +90,4 @@ public class MainWindowViewModel : ViewModelBase
 
         return process.ExitCode != 0;
     }
-
-    private DirectoryInfo? FindSuiteCloudConfigDirectory(FileInfo fileInfo)
-    {
-        var currentDirectory = fileInfo.Directory;
-
-        while (currentDirectory != null)
-        {
-            if (File.Exists(Path.Combine(currentDirectory.FullName, "suitecloud.config.js")))
-            {
-                return currentDirectory;
-            }
-
-            currentDirectory = currentDirectory.Parent;
-        }
-
-        return null;
-    }
-
-    private SdfPackage[] GetSdfAccountsAvailable()
-    {
-
-        var command = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            ? "cmd"
-            : "/bin/bash";
-
-        var commandArguments = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            ? "/c suitecloud account:manageauth --list"
-            : "-c \"suitecloud account:manageauth --list\"";
-
-        var startInfo = new ProcessStartInfo {
-            WindowStyle = ProcessWindowStyle.Hidden,
-            FileName = command,
-            Arguments = commandArguments,
-            RedirectStandardOutput = true
-        };
-
-        var environments = new List<SdfPackage>();
-        using var process = Process.Start(startInfo);
-        using var reader = process?.StandardOutput;
-        var ansiEscapeRegex = new Regex(@"\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]?");
-        var result = reader?.ReadToEnd();
-        result = ansiEscapeRegex.Replace(result!, string.Empty);
-        var lines = result.Split('\n');
-        foreach (var line in lines)
-        {
-            var parts = line.Split('|');
-            if (parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0]))
-            {
-                environments.Add(new SdfPackage {
-                    Name = parts[0].Trim(), IsChecked = parts[0].Trim().Equals(_selectedAccount)
-                });
-            }
-        }
-
-        return environments.ToArray();
-    }
 }
-
