@@ -14,21 +14,21 @@
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
          to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <viewModels:MainWindowViewModel/>
+        <viewModels:MainWindowViewModel />
     </Design.DataContext>
 
-    <Border BorderBrush="Black" BorderThickness="3"> 
+    <Border BorderBrush="Black" BorderThickness="3">
         <DockPanel LastChildFill="True">
 
             <StackPanel DockPanel.Dock="Top" Margin="10">
 
                 <TextBlock Text="{Binding FileToUploadName}" Margin="10" Padding="5" />
                 <TextBlock Text="{Binding SdfFolderName}" Margin="10" Padding="5" />
-                
+
                 <Button Name="CopyToAccountButton" Content="Copy to Account" IsDefault="True"
                         VerticalAlignment="Top" HorizontalAlignment="Center" Command="{Binding SendToAccounts}" />
             </StackPanel>
-  
+
 
             <DockPanel DockPanel.Dock="Bottom" Margin="10">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -37,11 +37,12 @@
                             <DataTemplate x:DataType="models:SdfPackage">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
-        
-                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked, Mode=TwoWay}" VerticalAlignment="Center"/>
+
+                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                              VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" />
                                 </Grid>
                             </DataTemplate>

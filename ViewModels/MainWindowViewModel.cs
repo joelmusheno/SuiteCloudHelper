@@ -19,6 +19,9 @@ public class MainWindowViewModel : ViewModelBase
     public string SdfFolderName => _packageRoot?.Name ?? string.Empty;
     public ImmutableArray<SdfPackage> SdfAccountsAvailable { get; }
 
+    public bool Complete { get; set; }
+    public bool Success { get; set; }
+
     public MainWindowViewModel(FileInfo fileInfo)
     {
         _fileToUpload = fileInfo;
@@ -36,12 +39,17 @@ public class MainWindowViewModel : ViewModelBase
 
     public void SendToAccounts()
     {
+        Complete = false;
+
         foreach (var package in SdfAccountsAvailable.Where(p => p.IsChecked))
         {
             Console.WriteLine($"{package.Name}, {package.IsChecked}");
             UpdateProjectJsonFileSdfFolder(_packageRoot, package.Name);
             package.Success = ExecuteShellCommand(_packageRoot!);
         }
+
+        Success = SdfAccountsAvailable.Any(p => p is { IsChecked: true, Success: false });
+        Complete = true;
     }
 
     private void UpdateProjectJsonFileSdfFolder(DirectoryInfo? packageRoot, string accountName)
